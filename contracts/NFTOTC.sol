@@ -11,10 +11,12 @@ contract NFTOTC is ERC1155{
     uint totalContracts=0;
     bool dealComplete =false;
 
+    address public Approved;
     //Generate Buyer and editor token
     // buyer token allows a buyer the liberty to engage with the contract
     // Editor token can edit contract: price/
-    constructor(string memory _URI,uint _price) ERC1155(_URI){
+    constructor(string memory _URI,uint _price, address _token) ERC1155(_URI){
+        Approved = _token;
         price = _price;
         _mint(msg.sender,buyerToken, 1, "");
         _mint(msg.sender,editorToken, 1, "");
@@ -22,7 +24,7 @@ contract NFTOTC is ERC1155{
     // Assets hold contracts and total tokens
     mapping(uint => Assets) public assets;
     struct Assets{
-        address AssetContract
+        address AssetContract;
         uint[] tokens;
     }
     // allows only the buyer to have the liberty to buy assets in an OTC Deal
@@ -38,55 +40,55 @@ contract NFTOTC is ERC1155{
         _;
     }
     //Buyer can accept opffer from user 
-    function buyAssets() public payable buyer return(bool){
+    function buyAssets() public payable buyer returns(bool){
         distrabution();
         dealComplete = true;
         return true;
     } 
     //Load assets into contract also add multiple contracts with multiple tokens
-    function activate(address _contract,uint[] _tokens, bool _activate) public Editor return(bool){
+    function activate(address _contract,uint[] _tokens, bool _activate) public editor returns(bool){
         require(loadAssetStatus == false, "contract has already been activated");
 
-        Approved public approved;
-        assets[totalContracts] = Assets(_contract,_tokens)
+        assets[totalContracts] = Assets(_contract,_tokens);
         totalContracts++;
 
         loadAssetStatus = _activate;
 
-        require(approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
+        require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
         //Retrive tokens from msg.sender
         //===============>
     } 
     //Editor can change price 
-    function editPrice(uint _price) public Editor return(bool){
+    function editPrice(uint _price) public editor returns(bool){
         price = _price;
     } 
     // Editor can destory contract offer and burn
-    function revokeOffer(address _userOffered)  public Editor return(bool){
+    function revokeOffer(address _userOffered)  public editor returns(bool){
         require(balanceOf(_userOffered,1) == 1);
         distrabution();
 
         _burn(_userOffered,buyerToken, 1, "");
-        return true
+        return true;
     }
     //Originator can redeem
-    function redeemValue()Editor public return(bool){
-        require(dealComplete == true, "contract still pending")
+    function redeemValue()editor public returns(bool){
+        require(dealComplete == true, "contract still pending");
         msg.sender.call{value: address(this).balance }("");  
     }
     //issues assets to correct partries
     // if true forward loop else backweards loop
-    function distrabution() internal return(bool){
+    function distrabution() internal returns(bool){
         //issue assets to apropriate parties
-        redeemingAssets public Token;
-        uint array[] = assets[count].tokens
+        redeemingAssets  Token;
+        uint array = assets[count].tokens;
         //loop through list of contracts
         for(uint count=0;count<=totalContracts;count++){
             Token = redeemingAssets(assets[count].AssetContract);
             //loop thorugh contract tokens
-            for(uint tokenCount=0;tokenCount<=(assets[count].tokens).length)
+            for(uint tokenCount=0;tokenCount<=(assets[count].tokens).length;tokenCount++) {
                 safeTransfer(address(this),msg.sender,array[tokenCount],"");
+            }
         }
     }
 }
