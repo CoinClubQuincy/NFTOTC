@@ -46,7 +46,7 @@ contract NFTOTC is ERC1155{
         return true;
     } 
     //Load assets into contract also add multiple contracts with multiple tokens
-    function activate(address _contract,uint[] _tokens, bool _activate) public editor returns(bool){
+    function activate(address _contract,uint[] memory _tokens, bool _activate) public editor returns(bool){
         require(loadAssetStatus == false, "contract has already been activated");
 
         assets[totalContracts] = Assets(_contract,_tokens);
@@ -54,7 +54,7 @@ contract NFTOTC is ERC1155{
 
         loadAssetStatus = _activate;
 
-        require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
+        //require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
         //Retrive tokens from msg.sender
         //===============>
@@ -68,7 +68,7 @@ contract NFTOTC is ERC1155{
         require(balanceOf(_userOffered,1) == 1);
         distrabution();
 
-        _burn(_userOffered,buyerToken, 1, "");
+        _burn(_userOffered,buyerToken, 1);
         return true;
     }
     //Originator can redeem
@@ -78,17 +78,17 @@ contract NFTOTC is ERC1155{
     }
     //issues assets to correct partries
     // if true forward loop else backweards loop
-    function distrabution() internal returns(bool){
-        //issue assets to apropriate parties
-        redeemingAssets  Token;
-        uint array = assets[count].tokens;
-        //loop through list of contracts
-        for(uint count=0;count<=totalContracts;count++){
-            Token = redeemingAssets(assets[count].AssetContract);
-            //loop thorugh contract tokens
-            for(uint tokenCount=0;tokenCount<=(assets[count].tokens).length;tokenCount++) {
-                safeTransfer(address(this),msg.sender,array[tokenCount],"");
-            }
-        }
+     function distrabution() internal returns(bool){
+    //     //issue assets to apropriate parties
+    //     //redeemingAssets  Token;
+    //     uint array = assets[count].tokens;
+    //     //loop through list of contracts
+    //     for(uint count=0;count<=totalContracts;count++){
+    //         //Token = redeemingAssets(assets[count].AssetContract);
+    //         //loop thorugh contract tokens
+    //         for(uint tokenCount=0;tokenCount<=(assets[count].tokens).length;tokenCount++) {
+    //             safeTransfer(address(this),msg.sender,array[tokenCount],"");
+    //         }
+    //     }
     }
 }
