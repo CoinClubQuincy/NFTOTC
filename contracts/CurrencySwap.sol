@@ -1,13 +1,13 @@
 pragma solidity ^0.8.10;
 // SPDX-License-Identifier: MIT
 
-contract InSwap{
+contract SwapIn{
     constructor(){}
 
 }
 
 
-contract OutSwap{
+contract SwapOut{
     constructor(){}
 
 }

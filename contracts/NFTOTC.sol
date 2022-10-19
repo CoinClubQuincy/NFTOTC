@@ -2,7 +2,22 @@ pragma solidity ^0.8.10;
 // SPDX-License-Identifier: MIT
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-contract NFTOTC is ERC1155{
+contract Asset is ERC1155{
+    uint asset=0;
+    constructor(string memory _URI) ERC1155(_URI){
+        _mint(msg.sender,asset, 1, "");
+    }
+}
+
+interface OTC_interface{
+    function buyAssets() external payable returns(bool);
+    function activate(address _contract,uint[] memory _tokens, bool _activate) external returns(bool);
+    function editPrice(uint _price) external returns(bool);
+    function revokeOffer(address _userOffered)  external returns(bool);
+    function redeemValue() external returns(bool);
+}
+
+contract OTC is ERC1155,OTC_interface{
     // change name??
     uint buyerToken=0;                 // Editor can send buyer token to a prospective buyer
     uint editorToken = 0;             //  Editor Token allows the editor to edit aspects of the contract
@@ -11,12 +26,12 @@ contract NFTOTC is ERC1155{
     uint totalContracts=0;
     bool dealComplete =false;
 
-    address public Approved;
+    Asset public Approved;
     //Generate Buyer and editor token
     // buyer token allows a buyer the liberty to engage with the contract
     // Editor token can edit contract: price/
     constructor(string memory _URI,uint _price, address _token) ERC1155(_URI){
-        Approved = _token;
+        Approved = Asset(_token);
         price = _price;
         _mint(msg.sender,buyerToken, 1, "");
         _mint(msg.sender,editorToken, 1, "");
@@ -54,14 +69,17 @@ contract NFTOTC is ERC1155{
 
         loadAssetStatus = _activate;
 
-        //require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
+        require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
         //Retrive tokens from msg.sender
-        //===============>
+        for(uint i; i<= _tokens.length; i++){
+            Approved.safeTransferFrom(msg.sender,address(this),_tokens[i],1,"");
+        }
     } 
     //Editor can change price 
     function editPrice(uint _price) public editor returns(bool){
         price = _price;
+        return true;
     } 
     // Editor can destory contract offer and burn
     function revokeOffer(address _userOffered)  public editor returns(bool){
