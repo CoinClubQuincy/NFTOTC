@@ -100,6 +100,7 @@ contract OTC is ERC1155,OTC_interface{
         distrabution();
 
         _burn(_userOffered,buyerToken, 1);
+        _mint(msg.sender,buyerToken,1,"");
         return true;
     }
     //Originator can redeem
