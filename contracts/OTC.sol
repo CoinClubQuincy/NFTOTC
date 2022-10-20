@@ -21,10 +21,15 @@ contract OTC is ERC1155,OTC_interface{
     // change name??
     uint buyerToken=0;                 // Editor can send buyer token to a prospective buyer
     uint editorToken = 0;             //  Editor Token allows the editor to edit aspects of the contract
-    uint price;                      //   price of contract sale
-    bool loadAssetStatus= false;    //    tells if contract has been activated
-    uint totalContracts=0;
-    bool dealComplete =false;
+    uint public price;                      //   price of contract sale
+    bool public activationStatus= false;    //    tells if contract has been activated
+    uint public totalContracts=0;
+    uint public totalTokens=0;
+    bool public dealComplete =false;
+
+    uint[] private totalsingleTokens;
+    uint[] private tmpsingletoken;
+    uint[] private tokenList;
 
     Asset public Approved;
     //Generate Buyer and editor token
@@ -46,7 +51,7 @@ contract OTC is ERC1155,OTC_interface{
     modifier buyer{
         require(balanceOf(msg.sender,buyerToken) == 1, "user must hold buyer token");
         require(msg.value >= price,"insuficent funds");
-        require(loadAssetStatus == true, "contract has not been activated");
+        require(activationStatus == true, "contract has not been activated");
         _;
     } 
     // allows editor of the contract to edit the price or kill the contract
@@ -62,19 +67,24 @@ contract OTC is ERC1155,OTC_interface{
     } 
     //Load assets into contract also add multiple contracts with multiple tokens
     function activate(address _contract,uint[] memory _tokens, bool _activate) public editor returns(bool){
-        require(loadAssetStatus == false, "contract has already been activated");
+        require(activationStatus == false, "contract has already been activated");
 
         assets[totalContracts] = Assets(_contract,_tokens);
         totalContracts++;
 
-        loadAssetStatus = _activate;
+        activationStatus = _activate;
 
         require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
-
+        totalTokens += _tokens.length;
         //Retrive tokens from msg.sender
-        for(uint i; i<= _tokens.length; i++){
-            Approved.safeTransferFrom(msg.sender,address(this),_tokens[i],1,"");
+         delete tmpsingletoken;
+
+        for(uint i; i <= tokenList.length;i++){
+            tmpsingletoken.push(1);
         }
+
+        Approved.safeBatchTransferFrom(msg.sender,address(this),_tokens,tmpsingletoken,"");
+
     } 
     //Editor can change price 
     function editPrice(uint _price) public editor returns(bool){
@@ -84,29 +94,33 @@ contract OTC is ERC1155,OTC_interface{
     // Editor can destory contract offer and burn
     function revokeOffer(address _userOffered)  public editor returns(bool){
         require(balanceOf(_userOffered,1) == 1);
+        require(dealComplete= false, "Deal already complete");
         distrabution();
 
         _burn(_userOffered,buyerToken, 1);
         return true;
     }
     //Originator can redeem
-    function redeemValue()editor public returns(bool){
+    function redeemValue() editor public returns(bool){
         require(dealComplete == true, "contract still pending");
+        require(dealComplete= false, "Deal already complete");
+
         msg.sender.call{value: address(this).balance }("");  
     }
-    //issues assets to correct partries
+    //issues assets to correct parties
     // if true forward loop else backweards loop
      function distrabution() internal returns(bool){
-    //     //issue assets to apropriate parties
-    //     //redeemingAssets  Token;
-    //     uint array = assets[count].tokens;
-    //     //loop through list of contracts
-    //     for(uint count=0;count<=totalContracts;count++){
-    //         //Token = redeemingAssets(assets[count].AssetContract);
-    //         //loop thorugh contract tokens
-    //         for(uint tokenCount=0;tokenCount<=(assets[count].tokens).length;tokenCount++) {
-    //             safeTransfer(address(this),msg.sender,array[tokenCount],"");
-    //         }
-    //     }
+        //issue assets to apropriate parties
+        //loop through list of contracts
+
+        for(uint count=0;count<=totalContracts;count++){
+            //Token = redeemingAssets(assets[count].AssetContract);
+            //loop thorugh contract tokens
+            tokenList = assets[count].tokens;
+            for(uint i; i <= tokenList.length;i++){
+                totalsingleTokens.push(1);
+            }    
+            Approved.safeBatchTransferFrom(address(this),msg.sender,assets[count].tokens,totalsingleTokens,"");
+        }
     }
 }
