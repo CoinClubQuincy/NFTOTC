@@ -20,7 +20,7 @@ interface OTC_interface{
 contract OTC is ERC1155,OTC_interface{
     // change name??
     uint buyerToken=0;                 // Editor can send buyer token to a prospective buyer
-    uint editorToken = 0;             //  Editor Token allows the editor to edit aspects of the contract
+    uint editorToken = 1;             //  Editor Token allows the editor to edit aspects of the contract
     uint public price;                      //   price of contract sale
     bool public activationStatus= false;    //    tells if contract has been activated
     uint public totalContracts=0;
@@ -85,6 +85,8 @@ contract OTC is ERC1155,OTC_interface{
 
         Approved.safeBatchTransferFrom(msg.sender,address(this),_tokens,tmpsingletoken,"");
 
+        return true;
+
     } 
     //Editor can change price 
     function editPrice(uint _price) public editor returns(bool){
@@ -106,10 +108,11 @@ contract OTC is ERC1155,OTC_interface{
         require(dealComplete= false, "Deal already complete");
 
         msg.sender.call{value: address(this).balance }("");  
+        return true;
     }
     //issues assets to correct parties
     // if true forward loop else backweards loop
-     function distrabution() internal returns(bool){
+    function distrabution() internal returns(bool){
         //issue assets to apropriate parties
         //loop through list of contracts
 
@@ -122,5 +125,6 @@ contract OTC is ERC1155,OTC_interface{
             }    
             Approved.safeBatchTransferFrom(address(this),msg.sender,assets[count].tokens,totalsingleTokens,"");
         }
+        return true;
     }
 }
