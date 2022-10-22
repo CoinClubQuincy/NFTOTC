@@ -20,9 +20,8 @@ interface OTC_interface{
 }
 
 contract OTC is ERC1155,OTC_interface{
-    // change name??
-    uint buyerToken=0;                 // Editor can send buyer token to a prospective buyer
-    uint editorToken = 1;             //  Editor Token allows the editor to edit aspects of the contract
+    uint buyerToken=0;                 // seller can send buyer token to a prospective buyer
+    uint sellerToken = 1;             //  seller Token allows the seller to edit aspects of the contract
 
     uint public price;                      //   price of contract sale
     bool public activationStatus= false;    //    tells if contract has been activated
@@ -35,14 +34,14 @@ contract OTC is ERC1155,OTC_interface{
     uint[] private tokenList;
 
     Asset public Approved;
-    //Generate Buyer and editor token
+    //Generate Buyer and seller token
     // buyer token allows a buyer the liberty to engage with the contract
-    // Editor token can edit contract: price/
+    // seller token can edit contract: price/
     constructor(string memory _URI,uint _price, address _token) ERC1155(_URI){
         Approved = Asset(_token);
         price = _price;
         _mint(msg.sender,buyerToken, 1, "");
-        _mint(msg.sender,editorToken, 1, "");
+        _mint(msg.sender,sellerToken, 1, "");
     }
     // Assets hold contracts and total tokens
     mapping(uint => Assets) public assets;
@@ -57,9 +56,9 @@ contract OTC is ERC1155,OTC_interface{
         require(activationStatus == true, "contract has not been activated");
         _;
     } 
-    // allows editor of the contract to edit the price or kill the contract
-    modifier editor{
-        require(balanceOf(msg.sender,buyerToken) == 1, "user must hold editor token");
+    // allows seller of the contract to edit the price or kill the contract
+    modifier seller{
+        require(balanceOf(msg.sender,buyerToken) == 1, "user must hold seller token");
         _;
     }
     //Buyer can accept opffer from user 
@@ -69,7 +68,7 @@ contract OTC is ERC1155,OTC_interface{
         return true;
     } 
     //Load assets into contract also add multiple contracts with multiple tokens
-    function activate(address _contract,uint[] memory _tokens, bool _activate) public editor returns(bool){
+    function activate(address _contract,uint[] memory _tokens, bool _activate) public seller returns(bool){
         require(activationStatus == false, "contract has already been activated");
         require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
@@ -88,13 +87,16 @@ contract OTC is ERC1155,OTC_interface{
         Approved.safeBatchTransferFrom(msg.sender,address(this),_tokens,tmpsingletoken,"");
         return true;
     } 
-    //Editor can change price 
-    function editPrice(uint _price) public editor returns(bool){
+    //seller can change price 
+    function editPrice(uint _price) public seller returns(bool){
+        require(dealComplete == true, "contract still pending");
+        require(activationStatus= true, "Deal already complete");
+        
         price = _price;
         return true;
     } 
-    // Editor can destory contract offer and burn
-    function revokeOffer(address _userOffered)  public editor returns(bool){
+    // seller can destory contract offer and burn
+    function revokeOffer(address _userOffered)  public seller returns(bool){
         require(balanceOf(_userOffered,1) == 1);
         require(dealComplete= false, "Deal already complete");
         distrabution();
@@ -104,7 +106,7 @@ contract OTC is ERC1155,OTC_interface{
         return true;
     }
     //Originator can redeem
-    function redeemValue() editor public returns(bool){
+    function redeemValue() seller public returns(bool){
         require(dealComplete == true, "contract still pending");
         require(activationStatus= true, "Deal already complete");
 
