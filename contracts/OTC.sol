@@ -3,9 +3,11 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 contract Asset is ERC1155{
-    uint asset=0;
+    uint asset1=0;
+    uint asset2=1;
     constructor(string memory _URI) ERC1155(_URI){
-        _mint(msg.sender,asset, 1, "");
+        _mint(msg.sender,asset1, 1, "");
+        _mint(msg.sender,asset2, 1, "");
     }
 }
 
@@ -21,6 +23,7 @@ contract OTC is ERC1155,OTC_interface{
     // change name??
     uint buyerToken=0;                 // Editor can send buyer token to a prospective buyer
     uint editorToken = 1;             //  Editor Token allows the editor to edit aspects of the contract
+
     uint public price;                      //   price of contract sale
     bool public activationStatus= false;    //    tells if contract has been activated
     uint public totalContracts=0;
@@ -68,25 +71,22 @@ contract OTC is ERC1155,OTC_interface{
     //Load assets into contract also add multiple contracts with multiple tokens
     function activate(address _contract,uint[] memory _tokens, bool _activate) public editor returns(bool){
         require(activationStatus == false, "contract has already been activated");
+        require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
         assets[totalContracts] = Assets(_contract,_tokens);
         totalContracts++;
-
         activationStatus = _activate;
 
-        require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
         totalTokens += _tokens.length;
         //Retrive tokens from msg.sender
-         delete tmpsingletoken;
+        delete tmpsingletoken;
 
         for(uint i; i <= tokenList.length;i++){
             tmpsingletoken.push(1);
         }
 
         Approved.safeBatchTransferFrom(msg.sender,address(this),_tokens,tmpsingletoken,"");
-
         return true;
-
     } 
     //Editor can change price 
     function editPrice(uint _price) public editor returns(bool){
@@ -106,7 +106,7 @@ contract OTC is ERC1155,OTC_interface{
     //Originator can redeem
     function redeemValue() editor public returns(bool){
         require(dealComplete == true, "contract still pending");
-        require(dealComplete= false, "Deal already complete");
+        require(activationStatus= true, "Deal already complete");
 
         msg.sender.call{value: address(this).balance }("");  
         return true;
