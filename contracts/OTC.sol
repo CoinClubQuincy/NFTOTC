@@ -36,9 +36,8 @@ contract OTC is ERC1155,OTC_interface{
     Asset public Approved;
     //Generate Buyer and seller token
     // buyer token allows a buyer the liberty to engage with the contract
-    // seller token can edit contract: price/
-    constructor(string memory _URI,uint _price, address _token) ERC1155(_URI){
-        Approved = Asset(_token);
+    // seller token can edit contract: price
+    constructor(string memory _URI,uint _price) ERC1155(_URI){
         price = _price;
         _mint(msg.sender,buyerToken, 1, "");
         _mint(msg.sender,sellerToken, 1, "");
@@ -72,6 +71,8 @@ contract OTC is ERC1155,OTC_interface{
         require(activationStatus == false, "contract has already been activated");
         require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
+        Approved = Asset(_contract);
+
         assets[totalContracts] = Assets(_contract,_tokens);
         totalContracts++;
         activationStatus = _activate;
@@ -91,7 +92,7 @@ contract OTC is ERC1155,OTC_interface{
     function editPrice(uint _price) public seller returns(bool){
         require(dealComplete == true, "contract still pending");
         require(activationStatus= true, "Deal already complete");
-        
+
         price = _price;
         return true;
     } 
@@ -118,11 +119,15 @@ contract OTC is ERC1155,OTC_interface{
     function distrabution() internal returns(bool){
         //issue assets to apropriate parties
         //loop through list of contracts
+        address contractList;
 
         for(uint count=0;count<=totalContracts;count++){
             //Token = redeemingAssets(assets[count].AssetContract);
             //loop thorugh contract tokens
             tokenList = assets[count].tokens;
+            contractList = assets[count].AssetContract;
+            Approved = Asset(contractList);
+            
             for(uint i; i <= tokenList.length;i++){
                 totalsingleTokens.push(1);
             }    
