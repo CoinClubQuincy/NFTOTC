@@ -67,17 +67,12 @@ contract OTC is ERC1155,OTC_interface{
         return true;
     } 
     //Load assets into contract also add multiple contracts with multiple tokens
-    function activate(address _contract,uint[] memory _tokens, bool _activate) public seller returns(bool){
+    function activate(address _contract,uint[] memory _tokens, bool _activate) public seller returns(bool ){
+        Approved = Asset(_contract);
+
         require(activationStatus == false, "contract has already been activated");
         require(Approved.isApprovedForAll(msg.sender,address(this))==true,"isApprovedForAll on token contract is false must equal true");
 
-        Approved = Asset(_contract);
-
-        assets[totalContracts] = Assets(_contract,_tokens);
-        totalContracts++;
-        activationStatus = _activate;
-
-        totalTokens += _tokens.length;
         //Retrive tokens from msg.sender
         delete tmpsingletoken;
 
@@ -86,7 +81,14 @@ contract OTC is ERC1155,OTC_interface{
         }
 
         Approved.safeBatchTransferFrom(msg.sender,address(this),_tokens,tmpsingletoken,"");
+
+        assets[totalContracts] = Assets(_contract,_tokens);
+        totalContracts++;
+        activationStatus = _activate;
+
+        totalTokens += _tokens.length;
         return true;
+
     } 
     //seller can change price 
     function editPrice(uint _price) public seller returns(bool){
@@ -115,7 +117,6 @@ contract OTC is ERC1155,OTC_interface{
         return true;
     }
     //issues assets to correct parties
-    // if true forward loop else backweards loop
     function distrabution() internal returns(bool){
         //issue assets to apropriate parties
         //loop through list of contracts
@@ -127,7 +128,7 @@ contract OTC is ERC1155,OTC_interface{
             tokenList = assets[count].tokens;
             contractList = assets[count].AssetContract;
             Approved = Asset(contractList);
-            
+
             for(uint i; i <= tokenList.length;i++){
                 totalsingleTokens.push(1);
             }    
