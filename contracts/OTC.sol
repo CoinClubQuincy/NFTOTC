@@ -121,19 +121,32 @@ contract OTC is ERC1155,OTC_interface{
         //issue assets to apropriate parties
         //loop through list of contracts
         address contractList;
+ 
 
-        for(uint count=0;count<=totalContracts;count++){
+        for(uint count=0;count<totalContracts;count++){
             //Token = redeemingAssets(assets[count].AssetContract);
             //loop thorugh contract tokens
+            delete totalsingleTokens;
             tokenList = assets[count].tokens;
             contractList = assets[count].AssetContract;
             Approved = Asset(contractList);
 
-            for(uint i; i <= tokenList.length;i++){
+            for(uint i; i < tokenList.length;i++){
                 totalsingleTokens.push(1);
-            }    
+            } 
             Approved.safeBatchTransferFrom(address(this),msg.sender,assets[count].tokens,totalsingleTokens,"");
         }
         return true;
+    }
+
+    //ERC1155Received fuctions
+    function onERC1155Received(address, address, uint256, uint256, bytes memory) public virtual returns (bytes4) {
+        return this.onERC1155Received.selector;
+    }
+    function onERC1155BatchReceived(address, address, uint256[] memory, uint256[] memory, bytes memory) public virtual returns (bytes4) {
+        return this.onERC1155BatchReceived.selector;
+    }
+    function onERC721Received(address, address, uint256, bytes memory) public virtual returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 }
