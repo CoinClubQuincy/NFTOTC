@@ -28,6 +28,7 @@ contract OTC is ERC1155,OTC_interface{
     uint public totalContracts=0;
     uint public totalTokens=0;
     bool public dealComplete =false;
+    uint public activationDate;
 
     uint[] private totalsingleTokens;
     uint[] private tmpsingletoken;
@@ -37,8 +38,9 @@ contract OTC is ERC1155,OTC_interface{
     //Generate Buyer and seller token
     // buyer token allows a buyer the liberty to engage with the contract
     // seller token can edit contract: price
-    constructor(string memory _URI,uint _price) ERC1155(_URI){
+    constructor(string memory _URI,uint _price,uint _activationDate) ERC1155(_URI){
         price = _price;
+        activationDate = _activationDate;
         _mint(msg.sender,buyerToken, 1, "");
         _mint(msg.sender,sellerToken, 1, "");
     }
@@ -53,6 +55,7 @@ contract OTC is ERC1155,OTC_interface{
         require(balanceOf(msg.sender,buyerToken) == 1, "user must hold buyer token");
         require(msg.value >= price,"insuficent funds");
         require(activationStatus == true, "contract has not been activated");
+        require(activationDate <= block.timestamp,"Contract has not matured yet must will till date of maturity");
         _;
     } 
     // allows seller of the contract to edit the price or kill the contract
@@ -121,7 +124,6 @@ contract OTC is ERC1155,OTC_interface{
         //issue assets to apropriate parties
         //loop through list of contracts
         address contractList;
- 
 
         for(uint count=0;count<totalContracts;count++){
             //Token = redeemingAssets(assets[count].AssetContract);
